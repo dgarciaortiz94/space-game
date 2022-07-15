@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit FriendRequest{% endblock %}
+
+{% block body %}
+    <h1>Edit FriendRequest</h1>
+
+    {{ include('friend_request/_form.html.twig', {'button_label': 'Update'}) }}
+
+    <a href="{{ path('app_friend_request_index') }}">back to list</a>
+
+    {{ include('friend_request/_delete_form.html.twig') }}
+{% endblock %}
