@@ -8,11 +8,21 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class GameController extends AbstractController
 {
-    #[Route('/game', name: 'app_game')]
+    #[Route('/lobby', name: 'app_user-interface')]
     public function index(): Response
     {
-        return $this->render('game/index.html.twig', [
+        return $this->render('lobby/index.html.twig', [
             'controller_name' => 'GameController',
         ]);
     }
+
+
+    #[Route('/game', name: 'app_play')]
+    public function play(): Response
+    {
+        return $this->render('game/index.html.twig', [
+            
+        ]);
+    }
+
 }

@@ -7,6 +7,7 @@ import { Check } from 'react-bootstrap-icons';
 import { X } from 'react-bootstrap-icons';
 
 import FriendForm from './friendForm';
+import Friends from './friends';
 
 class UserInterface extends React.Component {
 
@@ -27,18 +28,6 @@ class UserInterface extends React.Component {
         this.getPlayers();
     }
 
-    getFriends() {
-        axios.get('http://prueba.test/friend-request/get-friends/'+global.session.id)
-        .then(response => {
-            this.setState({
-                friends: response.data.friends,
-            });
-        })
-        .catch(error => {
-            console.log(error);
-        })
-    }
-
     getPlayers() {
         axios.get('http://prueba.test/player')
         .then(response => {
@@ -57,7 +46,6 @@ class UserInterface extends React.Component {
             global.session = response.data.session;
 
             this.getReceivedFriendRequests();
-            this.getFriends();
 
             this.handleWebSocket();
         })
@@ -173,14 +161,7 @@ class UserInterface extends React.Component {
                         <div className='aside col-3'>
                             <FriendForm></FriendForm>
 
-                            <div className='friends-container'>
-                                {this.state.friends.map(friend => (
-                                    <div className='friend d-flex justify-content-between align-items-center' key={friend.id}>
-                                        <p>{friend.username}</p>
-                                        <div className={friend.state}></div>
-                                    </div>
-                                ))}
-                            </div>
+                            <Friends></Friends>
                         </div>
 
                         <section className='section col-12 col-lg-9'>
