@@ -2,7 +2,21 @@
 
 {% block title %}Fight game{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+
+    <link rel="stylesheet" href="{{ asset('assets/css/game.css') }}">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script src="{{ asset('assets/js/game.js') }}"></script>
+{% endblock %}
+
 {% block body %}
-    <div id="main-container"></div>
+    <div class="sup-container"></div>
+
+    <canvas id="canvas" width="1080" height="920"></canvas>
 {% endblock %}
 

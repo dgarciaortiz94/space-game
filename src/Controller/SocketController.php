@@ -64,6 +64,10 @@ class SocketController extends AbstractController implements MessageComponentInt
                 if ($this->clients[$client]["id"] == $msg["chat"]["user"]) $client->send($msg["chat"]["message"]);
             }
         }
+
+        if (isset($msg["page"])) {
+            dump($msg["player"]);
+        }
     }
 
     public function onClose(ConnectionInterface $conn) {

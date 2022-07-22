@@ -15,21 +15,26 @@ class UserInterface extends React.Component {
         super(props);
 
         this.state = {
-            friendRequests: [],
+            userInfo: [],
             friends: [],
+            friendRequests: [],
             players: [],
             showNotifications: false,
         }
     }
 
-    componentDidMount() {
-        this.getSession();
 
+    componentDidMount() {
         this.getPlayers();
+        this.getReceivedFriendRequests();
+        this.getFriends();
+
+        this.handleWebSocket();
     }
 
+
     getPlayers() {
-        axios.get('http://prueba.test/player')
+        axios.get('http://space-game.test/player')
         .then(response => {
             this.setState({
                 players: response.data,
@@ -40,22 +45,20 @@ class UserInterface extends React.Component {
         })
     }
 
-    getSession() {
-        axios.get('http://prueba.test/user/session/get-session')
+
+    getFriends() {
+        axios.get('http://space-game.test/friend-request/get-friends/'+sessionStorage.getItem("id"))
         .then(response => {
-            global.session = response.data.session;
-
-            this.getReceivedFriendRequests();
-
-            this.handleWebSocket();
+            this.setState({friends: response.data.friends});
         })
         .catch(error => {
-            console.log(error.request.responseText);
+            console.log(error);
         })
     }
 
+
     getReceivedFriendRequests() {
-        axios.get('http://prueba.test/friend-request/recived/'+global.session.id)
+        axios.get('http://space-game.test/friend-request/recived/'+sessionStorage.getItem("id"))
         .then(response => {
             this.setState({
                 friendRequests: response.data.receivedFriendRequest
@@ -87,7 +90,7 @@ class UserInterface extends React.Component {
 
 
     handleFriendRequest(friendRequest, value) {
-        axios.post('http://prueba.test/friend-request/'+friendRequest+'/edit', {
+        axios.post('http://space-game.test/friend-request/'+friendRequest+'/edit', {
             "value": value
         })
         .then(response => {
@@ -108,7 +111,11 @@ class UserInterface extends React.Component {
         conn.onopen = e => { 
             console.log("Conexión establecida");
             conn.send(JSON.stringify({
-                "session": global.session
+                "session": {
+                    id: sessionStorage.getItem("id"),
+                    username: sessionStorage.getItem("username"),
+                    state: sessionStorage.getItem("state"),
+                }
             })); 
         }
 
@@ -123,8 +130,6 @@ class UserInterface extends React.Component {
 
         conn.onmessage = e => { 
             let data = JSON.parse(e.data);
-
-            console.log(data.connected);
 
             if (data.connected != null) {
                 let friends = this.state.friends;
@@ -160,8 +165,8 @@ class UserInterface extends React.Component {
                     <div className='row'>
                         <div className='aside col-3'>
                             <FriendForm></FriendForm>
-
-                            <Friends></Friends>
+                            
+                            <Friends friends={this.state.friends}></Friends>
                         </div>
 
                         <section className='section col-12 col-lg-9'>
@@ -169,7 +174,7 @@ class UserInterface extends React.Component {
                                 {this.state.players.map(player => (
                                     <div className='col-12 col-md-6 col-lg-4 d-flex justify-content-center align-items-center' key={player.id}>
                                         <div className='player-card' data-value={player.id}>
-                                            <img src={"http://prueba.test/media/images/"+player.img} className='img-fluid'></img>
+                                            <img src={"http://space-game.test/media/images/"+player.img} className='img-fluid'></img>
                                             <p>{player.name}</p>
                                         </div>
                                     </div>

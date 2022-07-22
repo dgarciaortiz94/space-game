@@ -2,7 +2,33 @@
 
 {% block title %}Fight game{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+
+    {{ encore_entry_link_tags('app') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    {{ encore_entry_script_tags('app') }}
+{% endblock %}
+
 {% block body %}
+    <script>
+        document.addEventListener("DOMContentLoaded", e => {
+            let session = {
+                id: "{{ app.user.id }}",
+                username: "{{ app.user.username }}",
+                state: "{{ app.user.state }}",
+            };
+
+            sessionStorage.setItem("id", "{{ app.user.id }}");
+            sessionStorage.setItem("username", "{{ app.user.username }}");
+            sessionStorage.setItem("state", "{{ app.user.state }}");
+        })
+    </script>
+
     <div id="main-container"></div>
 {% endblock %}
 
