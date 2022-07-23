@@ -111,6 +111,7 @@ class UserInterface extends React.Component {
         conn.onopen = e => { 
             console.log("Conexión establecida");
             conn.send(JSON.stringify({
+                "action": "connection",
                 "session": {
                     id: sessionStorage.getItem("id"),
                     username: sessionStorage.getItem("username"),
@@ -119,26 +120,27 @@ class UserInterface extends React.Component {
             })); 
         }
 
-        document.getElementById("main-container").addEventListener("click", () => {
-            conn.send(JSON.stringify({
-                "chat": {
-                    "user": 2,
-                    "message": "saludos al 2"
-                }
-            })); 
-        })
-
         conn.onmessage = e => { 
-            let data = JSON.parse(e.data);
+            let msg = JSON.parse(e.data);
 
-            if (data.connected != null) {
-                let friends = this.state.friends;
+            console.log(msg);
 
-                friends.forEach(friend => {
-                    if (friend.id == data.connected.id) friend.state = data.connected.state;
+            switch (msg["action"]) {
+                case 'connection':
+                    let friends = this.state.friends;
 
-                    this.setState({friends: friends});
-                })
+                    friends.forEach(friend => {
+                        if (friend.id == msg.session.id) friend.state = msg.session.state;
+
+                        this.setState({friends: friends});
+                    })
+
+                    console.log(msg.session)
+                    break;
+                
+                default:
+                    console.log("No se recibió acción");
+                    break;
             }
         };
     }
