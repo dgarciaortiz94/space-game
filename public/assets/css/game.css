@@ -15,10 +15,14 @@ body {
     box-sizing: border-box;
 }
 
+.players-info-container {
+    opacity: 0.6;
+}
+
+.player1, .player2 {
+    color: #ffffff;
+}
+
 canvas {
-    background-image: url(../../media/images/website/background.jpg);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    background-attachment: fixed;
+    background-image: url(../../media/images/website/starfield.png);
 }

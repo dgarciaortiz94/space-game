@@ -23,7 +23,7 @@ class FriendForm extends React.Component {
 
     searchUsers(partOfUsername) {
         if (partOfUsername.length > 0) {
-            axios.post('http://space-game.test/user/get-by-name', {
+            axios.post('http://192.168.1.104:81/user/get-by-name', {
                 "name": partOfUsername
             })
             .then(response => {
@@ -49,7 +49,7 @@ class FriendForm extends React.Component {
 
         console.log(id); //PETICIÓN AJAX PARA AGREGAR AMIGO, Y SUBIR A GITHUB
 
-        axios.post('http://space-game.test/friend-request/new', {
+        axios.post('http://192.168.1.104:81/friend-request/new', {
             "userTo": id
         })
         .then(response => {

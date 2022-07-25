@@ -90,7 +90,7 @@ class SocketController extends AbstractController implements MessageComponentInt
 
             case 'frame':
                 foreach ($this->clients as $client) {
-                    if ($this->clients[$client]["id"] == $msg["player"]["id"]) $client->send(json_encode(["action" => "frame", "player" => ["x" => $msg["player"]["x"], "y" => $msg["player"]["y"], "angle" => $msg["player"]["angle"]]]));
+                    if ($this->clients[$client]["id"] == $msg["player"]["id"]) $client->send(json_encode(["action" => "frame", "player" => ["x" => $msg["player"]["x"], "y" => $msg["player"]["y"], "angle" => $msg["player"]["angle"], "projectiles" => $msg["player"]["projectiles"]]]));
                 }
                 
                 break;

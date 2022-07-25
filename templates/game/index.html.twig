@@ -6,16 +6,37 @@
     {{ parent() }}
 
     <link rel="stylesheet" href="{{ asset('assets/css/game.css') }}">
+
+    <link rel="stylesheet" href="{{ asset('libraries/bootstrap/dist/css/bootstrap.min.css') }}">
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
 
+    <script src="{{ asset('libraries/bootstrap/dist/js/bootstrap.min.js') }}"></script>
+
     {# <script src="{{ asset('assets/js/game.js') }}"></script> #}
 {% endblock %}
 
 {% block body %}
-    <div class="sup-container"></div>
+    <div class="sup-container">
+        <div class="d-flex justify-content-between align-items-center w-75 mx-auto mt-3 players-info-container">
+            <div style="width: 40%;">
+                <div class="player1">Player 1</div>
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" aria-label="Basic example" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+
+            <div style="width: 40%;">
+                <div class="player2">Player 2</div>
+
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" aria-label="Basic example" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <canvas id="canvas" width="1080" height="920"></canvas>
 
@@ -54,7 +75,7 @@
                     this.frameNo = 0;
                     this.interval = setInterval(updateGameArea, 20);
 
-                    conn = new WebSocket('ws://localhost:8080/game');
+                    conn = new WebSocket('ws://192.168.1.104:8282/game');
 
 
                     // SOCKETS
@@ -74,8 +95,6 @@
 
                     conn.onmessage = e => { 
                         let msg = JSON.parse(e.data);
-
-                        console.log(msg);
             
                         switch (msg["action"]) {
                             case 'ready':
@@ -101,11 +120,17 @@
                                 break;
 
                             case 'frame':
-                                console.log("entra a frame");
-        
                                 player2.x = msg["player"]["x"];
                                 player2.y = msg["player"]["y"];
                                 player2.angle = msg["player"]["angle"];
+
+                                player2.projectiles = [];
+
+                                msg["player"]["projectiles"].forEach(projectile => {
+                                    //console.log(projectile);
+                                    player2.projectiles.push(new Projectile(projectile.x, projectile.y, projectile.angle));
+                                });
+                                
                                 break;
                             
                             default:
@@ -127,19 +152,6 @@
                     window.addEventListener('keyup', function (e) {
                         gameArea.keys[e.key] = (e.type == "keydown");
                     });
-
-                    window.addEventListener('keydown', function (e) {
-                        // player1.shoot();
-
-                        if (e.key == " ") {
-                            let projectile = new Projectile(player1.x, player1.y, player1.angle);
-
-                            let shootInterval = setInterval(() => {
-                                projectile.newPos();
-                                projectile.update(gameArea.context, shootInterval);
-                            }, 15);
-                        }
-                    })
                 }
 
                 stop() {
@@ -167,11 +179,19 @@
                     this.moveAngle = 0;
                     this.x = x;
                     this.y = y;
+
+                    this.projectiles = [];
                 }
 
                 shoot = () => {
-                    let projectile = new Projectile(this.x, this.y, this.angle);
-                    projectile.update(this.ctx);
+                    this.projectiles.forEach(projectile => {
+                        projectile.newPos();
+                        projectile.update(this.ctx);
+
+                        if ((projectile.y >= (player2.y - player2.width / 2) && projectile.y <= (player2.y + player2.width / 2)) && (projectile.x >= (player2.x - player2.width / 2) && projectile.x < (player2.x + player2.width / 2))) {
+                            this.projectiles.splice(this.projectiles.indexOf(projectile), 1);
+                        }
+                    });
                 }
         
                 update(ctx, player2) {
@@ -181,6 +201,8 @@
                     this.ctx.rotate(this.angle);
                     this.ctx.drawImage(this.img, this.width / -2, this.height / -2, this.width, this.height);
                     this.ctx.restore();
+
+                    this.shoot();
                 }
 
                 newPos() {
@@ -197,8 +219,8 @@
                     this.speed = 30;
                     this.x = x;
                     this.y = y;
-                    this.width = 5;
-                    this.height = 25;
+                    this.width = 2;
+                    this.height = 15;
                     this.angle = angle;
                 }
 
@@ -211,10 +233,6 @@
                     ctx.fillStyle = "yellow";
                     ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
                     this.ctx.restore();
-
-                    if ((this.y >= (player2.y - player2.width / 2) && this.y <= (player2.y + player2.width / 2)) && (this.x >= (player2.x - player2.width / 2) && this.x < (player2.x + player2.width / 2))) {
-                        clearInterval(shootInterval);
-                    }
                 }
 
                 newPos() {
@@ -260,8 +278,14 @@
                 }
 
                 if (gameArea.keys && gameArea.keys["ArrowDown"]) {
-                    player1.speed= -10; 
+                    if ( !(player1.x <= 0 + player1.width/2) && !(player1.x >= gameArea.width - player1.width/2) 
+                        && !(player1.y <= 0 + player1.width/2) && !(player1.y >= gameArea.height - player1.width/2) ) { 
+                        player1.speed = -10;
+                    }
+                    else player1.speed = -1;
                 }
+
+                if (gameArea.keys && gameArea.keys[" "]) player1.projectiles.push(new Projectile(player1.x, player1.y, player1.angle));
 
                 player1.newPos();
                 player1.update(gameArea.context);
@@ -270,10 +294,7 @@
                 player2.update(gameArea.context);
 
 
-
                 if (play == true) {
-                    console.log("manda frame");
-
                     conn.send(JSON.stringify({
                         "action": "frame",
                         "session": {
@@ -286,6 +307,7 @@
                             x: player1.x,
                             y: player1.y,
                             angle: player1.angle,
+                            projectiles: player1.projectiles,
                         }
                     }))   
                 }

@@ -34,7 +34,7 @@ class UserInterface extends React.Component {
 
 
     getPlayers() {
-        axios.get('http://space-game.test/player')
+        axios.get('http://192.168.1.104:81/player')
         .then(response => {
             this.setState({
                 players: response.data,
@@ -47,7 +47,7 @@ class UserInterface extends React.Component {
 
 
     getFriends() {
-        axios.get('http://space-game.test/friend-request/get-friends/'+sessionStorage.getItem("id"))
+        axios.get('http://192.168.1.104:81/friend-request/get-friends/'+sessionStorage.getItem("id"))
         .then(response => {
             this.setState({friends: response.data.friends});
         })
@@ -58,7 +58,7 @@ class UserInterface extends React.Component {
 
 
     getReceivedFriendRequests() {
-        axios.get('http://space-game.test/friend-request/recived/'+sessionStorage.getItem("id"))
+        axios.get('http://192.168.1.104:81/friend-request/recived/'+sessionStorage.getItem("id"))
         .then(response => {
             this.setState({
                 friendRequests: response.data.receivedFriendRequest
@@ -90,7 +90,7 @@ class UserInterface extends React.Component {
 
 
     handleFriendRequest(friendRequest, value) {
-        axios.post('http://space-game.test/friend-request/'+friendRequest+'/edit', {
+        axios.post('http://192.168.1.104:81/friend-request/'+friendRequest+'/edit', {
             "value": value
         })
         .then(response => {
@@ -106,7 +106,7 @@ class UserInterface extends React.Component {
 
 
     handleWebSocket() {
-        var conn = new WebSocket('ws://localhost:8080/game');
+        var conn = new WebSocket('ws://192.168.1.104:8282/game');
 
         conn.onopen = e => { 
             console.log("Conexión establecida");
@@ -176,7 +176,7 @@ class UserInterface extends React.Component {
                                 {this.state.players.map(player => (
                                     <div className='col-12 col-md-6 col-lg-4 d-flex justify-content-center align-items-center' key={player.id}>
                                         <div className='player-card' data-value={player.id}>
-                                            <img src={"http://space-game.test/media/images/"+player.img} className='img-fluid'></img>
+                                            <img src={"http://192.168.1.104:81/media/images/"+player.img} className='img-fluid'></img>
                                             <p>{player.name}</p>
                                         </div>
                                     </div>
