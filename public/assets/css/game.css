@@ -26,3 +26,7 @@ body {
 canvas {
     background-image: url(../../media/images/website/starfield.png);
 }
+
+.progress-bar {
+    width: 100%;
+}
