@@ -39,7 +39,7 @@ class RunSocketCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $app = new App('192.168.1.35', 8282, '192.168.1.35');
+        $app = new App('192.168.1.41', 8282, '192.168.1.41');
         $app->route('/game', new SocketController($this->em), array('*'));
         $app->run();
 

@@ -63,6 +63,8 @@
                     this.canvas = canvasElement;
                     this.width = windowWidth;
                     this.height = windowHeight;
+
+                    this.ships = [];
                 }
 
                 start() { 
@@ -75,7 +77,7 @@
                     this.frameNo = 0;
                     this.interval = setInterval(updateGameArea, 20);
 
-                    conn = new WebSocket('ws://192.168.1.35:8282/game');
+                    conn = new WebSocket('ws://192.168.1.41:8282/game');
 
 
                     // SOCKETS
@@ -166,7 +168,7 @@
 
             class Ship
             {
-                constructor(imagePath, width, height, x, y, live, acelerationCoefficient) 
+                constructor(imagePath, width, height, x, y, live, acelerationCoefficient, turnCoeficient) 
                 {
                     this.img = new Image();
                     this.img.src = imagePath;
@@ -179,6 +181,7 @@
                     this.acelerationCoefficient = acelerationCoefficient;
                     this.angle = 0;
                     this.moveAngle = 0;
+                    this.turnCoeficient = turnCoeficient;
                     this.x = x;
                     this.y = y;
 
@@ -188,22 +191,10 @@
                     this.particles = [];
                 }
 
-
-                shoot = () => {
-                    this.projectiles.forEach(projectile => {
-                        projectile.newPos();
-                        projectile.update(this.ctx);
-
-                        if ((projectile.y >= (player2.y - player2.width / 2) && projectile.y <= (player2.y + player2.width / 2)) && (projectile.x >= (player2.x - player2.width / 2) && projectile.x < (player2.x + player2.width / 2))) {
-                            this.projectiles.splice(this.projectiles.indexOf(projectile), 1);
-                            player2.live -= 2;
-                            document.getElementById("player2__bar").style.width = player2.live+"%";
-                            document.getElementById("player2__bar").setAttribute("aria-valuenow", player2.live);
-                        }
-                    });
-                }
-                
+                // RENDER SHIP
                 update(ctx, player2) {
+                    this.newPos();
+
                     this.ctx = ctx;
                     this.ctx.save();
                     this.ctx.translate(this.x, this.y);
@@ -211,13 +202,37 @@
                     this.ctx.drawImage(this.img, this.width / -2, this.height / -2, this.width, this.height);
                     this.ctx.restore();
 
-                    this.shoot();
+                    this.updateProjectiles();
                 }
 
                 newPos() {
                     this.angle += this.moveAngle * Math.PI / 180;
                     this.x += this.speed * Math.sin(this.angle);
                     this.y -= this.speed * Math.cos(this.angle);
+                }
+
+
+                // ATACK
+                shoot() {
+                    this.projectiles.push(new Projectile(this.x, this.y, this.angle));
+                }
+
+
+                // RENDER ALL PROJECTILES FROM SHIP
+                updateProjectiles = () => {
+                    this.projectiles.forEach(projectile => {
+                        projectile.update(this.ctx);
+
+                        if (projectile.hasImpatedWithLimits() || projectile.hasHit()) {
+                            this.projectiles.splice(this.projectiles.indexOf(projectile), 1);
+
+                            if (projectile.hasHit()) {
+                                player2.live -= 2;
+                                document.getElementById("player2__bar").style.width = player2.live+"%";
+                                document.getElementById("player2__bar").setAttribute("aria-valuenow", player2.live);
+                            }
+                        }
+                    });
                 }
             }
 
@@ -233,9 +248,11 @@
                     this.angle = angle;
                 }
 
+                // RENDER PROJECTILE
                 update(ctx) {
-                    this.ctx = ctx;
+                    this.newPos();
 
+                    this.ctx = ctx;
                     this.ctx.save();
                     this.ctx.translate(this.x, this.y);
                     this.ctx.rotate(this.angle);
@@ -247,6 +264,19 @@
                 newPos() {
                     this.x += this.speed * Math.sin(this.angle);
                     this.y -= this.speed * Math.cos(this.angle);
+                }
+
+
+                hasHit() {
+                    if ((this.y >= (player2.y - player2.width / 2) && this.y <= (player2.y + player2.width / 2)) && (this.x >= (player2.x - player2.width / 2) && this.x < (player2.x + player2.width / 2))) {
+                        return true;
+                    }
+                }
+
+                hasImpatedWithLimits() {
+                    if (this.x > canvas.width || this.y > canvas.height || this.x < 0 || this.y < 0) {
+                        return true;
+                    }
                 }
             }
 
@@ -289,8 +319,8 @@
             let gameArea;
 
             function startGame() {
-                player1 = new Ship("../../media/images/ship1/ship1.png", 60, 60, 225, 225, 100, 0.15);
-                player2 = new Ship("../../media/images/ship2/ship2.png", 60, 60, 425, 425, 100, 0.15);
+                player1 = new Ship("../../media/images/ship1/ship1.png", 60, 60, 225, 225, 100, 0.15, 3);
+                player2 = new Ship("../../media/images/ship2/ship2.png", 60, 60, 425, 425, 100, 0.15, 3);
 
                 gameArea = new Canvas(canvas, windowWidth, windowHeight);
                 gameArea.start();
@@ -305,8 +335,8 @@
                 // if(rightPressed && player1.posX < getPageSize()[0] - player1.size) player1.move(+speedMoving, 0);
                 // else if(leftPressed && player1.posX > 0) player1.move(-speedMoving, 0);
 
-                if (gameArea.keys && gameArea.keys["ArrowLeft"]) player1.moveAngle = -3;
-                if (gameArea.keys && gameArea.keys["ArrowRight"]) player1.moveAngle = 3;
+                if (gameArea.keys && gameArea.keys["ArrowLeft"]) player1.moveAngle = -(player1.turnCoeficient);
+                if (gameArea.keys && gameArea.keys["ArrowRight"]) player1.moveAngle = player1.turnCoeficient;
 
                 if (gameArea.keys && gameArea.keys["ArrowUp"]) {
                     if ( !(player1.x <= 0 + player1.width/2) && !(player1.x >= gameArea.width - player1.width/2) 
@@ -348,12 +378,10 @@
                     }
                 }
 
-                if (gameArea.keys && gameArea.keys[" "]) player1.projectiles.push(new Projectile(player1.x, player1.y, player1.angle));
+                if (gameArea.keys && gameArea.keys[" "] && player1.projectiles.length < 3) player1.shoot();
 
-                player1.newPos();
+                
                 player1.update(gameArea.context);
-
-                player2.newPos();
                 player2.update(gameArea.context);
 
 

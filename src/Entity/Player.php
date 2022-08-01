@@ -19,8 +19,11 @@ class Player
     #[ORM\Column(type: 'string', length: 255)]
     private $img;
 
-    #[ORM\Column(type: 'integer')]
-    private $speedMoving;
+    #[ORM\Column(type: 'float')]
+    private $acelerationCoefficient;
+
+    #[ORM\Column(type: 'float')]
+    private $turnCoeficient;
 
     public function getId(): ?int
     {
@@ -51,15 +54,28 @@ class Player
         return $this;
     }
 
-    public function getSpeedMoving(): ?int
+    public function getAcelerationCoefficient(): ?float
     {
-        return $this->speedMoving;
+        return $this->acelerationCoefficient;
     }
 
-    public function setSpeedMoving(int $speedMoving): self
+    public function setAcelerationCoefficient(float $acelerationCoefficient): self
     {
-        $this->speedMoving = $speedMoving;
+        $this->acelerationCoefficient = $acelerationCoefficient;
 
         return $this;
     }
+
+    public function getTurnCoeficient(): ?float
+    {
+        return $this->turnCoeficient;
+    }
+
+    public function setTurnCoeficient(float $turnCoeficient): self
+    {
+        $this->turnCoeficient = $turnCoeficient;
+
+        return $this;
+    }
+
 }
