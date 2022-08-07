@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 22-07-2022 a las 18:55:01
+-- Tiempo de generación: 07-08-2022 a las 18:27:19
 -- Versión del servidor: 10.4.24-MariaDB
 -- Versión de PHP: 8.1.6
 
@@ -46,7 +46,14 @@ INSERT INTO `doctrine_migration_versions` (`version`, `executed_at`, `execution_
 ('DoctrineMigrations\\Version20220707164330', '2022-07-07 18:43:45', 153),
 ('DoctrineMigrations\\Version20220707165528', '2022-07-07 18:55:34', 111),
 ('DoctrineMigrations\\Version20220707165643', '2022-07-07 18:56:47', 37),
-('DoctrineMigrations\\Version20220713204538', '2022-07-13 22:45:49', 450);
+('DoctrineMigrations\\Version20220713204538', '2022-07-13 22:45:49', 450),
+('DoctrineMigrations\\Version20220730115307', '2022-08-01 19:03:24', 146),
+('DoctrineMigrations\\Version20220730115644', '2022-08-01 19:03:24', 6),
+('DoctrineMigrations\\Version20220801182152', '2022-08-01 20:22:02', 42),
+('DoctrineMigrations\\Version20220803154251', '2022-08-03 17:42:58', 160),
+('DoctrineMigrations\\Version20220803154431', '2022-08-03 17:44:34', 71),
+('DoctrineMigrations\\Version20220803154658', '2022-08-03 17:47:01', 30),
+('DoctrineMigrations\\Version20220803173221', '2022-08-03 19:32:24', 34);
 
 -- --------------------------------------------------------
 
@@ -96,17 +103,42 @@ DROP TABLE IF EXISTS `player`;
 CREATE TABLE `player` (
   `id` int(11) NOT NULL,
   `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `speed_moving` int(11) NOT NULL,
-  `img` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL
+  `img` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `aceleration_coefficient` double NOT NULL,
+  `turn_coeficient` double NOT NULL,
+  `max_speed` double NOT NULL,
+  `projectile_id` int(11) DEFAULT NULL,
+  `live` double NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `player`
 --
 
-INSERT INTO `player` (`id`, `name`, `speed_moving`, `img`) VALUES
-(1, 'Millenary falcon', 30, 'ship1/ship1.png'),
-(2, 'Endurance', 30, 'ship2/ship2.png');
+INSERT INTO `player` (`id`, `name`, `img`, `aceleration_coefficient`, `turn_coeficient`, `max_speed`, `projectile_id`, `live`) VALUES
+(1, 'Millenary falcon', 'millenary falcon/millenary falcon-stopped.png', 0.05, 3, 10, 1, 100),
+(2, 'Endurance', 'ship2/ship2.png', 0, 0, 0, 1, 100);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `projectile`
+--
+
+DROP TABLE IF EXISTS `projectile`;
+CREATE TABLE `projectile` (
+  `id` int(11) NOT NULL,
+  `name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `speed` double NOT NULL,
+  `damage` double NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `projectile`
+--
+
+INSERT INTO `projectile` (`id`, `name`, `speed`, `damage`) VALUES
+(1, 'Projectile 1', 30, 2);
 
 -- --------------------------------------------------------
 
@@ -163,6 +195,13 @@ ALTER TABLE `messenger_messages`
 -- Indices de la tabla `player`
 --
 ALTER TABLE `player`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `IDX_98197A65CE6E9B6C` (`projectile_id`);
+
+--
+-- Indices de la tabla `projectile`
+--
+ALTER TABLE `projectile`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -195,6 +234,12 @@ ALTER TABLE `player`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT de la tabla `projectile`
+--
+ALTER TABLE `projectile`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT de la tabla `user`
 --
 ALTER TABLE `user`
@@ -210,6 +255,12 @@ ALTER TABLE `user`
 ALTER TABLE `friend_request`
   ADD CONSTRAINT `FK_F284D946C066AFE` FOREIGN KEY (`target_user_id`) REFERENCES `user` (`id`),
   ADD CONSTRAINT `FK_F284D94EEB16BFD` FOREIGN KEY (`source_user_id`) REFERENCES `user` (`id`);
+
+--
+-- Filtros para la tabla `player`
+--
+ALTER TABLE `player`
+  ADD CONSTRAINT `FK_98197A65CE6E9B6C` FOREIGN KEY (`projectile_id`) REFERENCES `projectile` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
