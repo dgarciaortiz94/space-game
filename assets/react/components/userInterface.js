@@ -6,8 +6,9 @@ import { BellFill } from 'react-bootstrap-icons';
 import { Check } from 'react-bootstrap-icons';
 import { X } from 'react-bootstrap-icons';
 
-import FriendForm from './friendForm';
+import FriendForm from './friends/friendForm';
 import Friends from './friends';
+import ChooseShip from './chooseShip';
 
 class UserInterface extends React.Component {
 
@@ -18,36 +19,38 @@ class UserInterface extends React.Component {
             userInfo: [],
             friends: [],
             friendRequests: [],
-            players: [],
+            ships: [],
             showNotifications: false,
+            targetUser: "",
+            chosenShip: "",
+            asideOption: "",
         }
     }
 
 
     componentDidMount() {
-        this.getPlayers();
         this.getReceivedFriendRequests();
         this.getFriends();
+        this.getShips();
 
         this.handleWebSocket();
     }
 
 
-    getPlayers() {
-        axios.get('http://192.168.1.41:81/player')
+    getShips() {
+        axios.get('http://192.168.1.35:81/player')
         .then(response => {
             this.setState({
-                players: response.data,
+                ships: response.data,
             });
         })
         .catch(error => {
-            console.log(error);
+            console.log(error.request.responseText);
         })
     }
 
-
     getFriends() {
-        axios.get('http://192.168.1.41:81/friend-request/get-friends/'+sessionStorage.getItem("id"))
+        axios.get('http://192.168.1.35:81/friend-request/get-friends/'+sessionStorage.getItem("id"))
         .then(response => {
             this.setState({friends: response.data.friends});
         })
@@ -58,7 +61,7 @@ class UserInterface extends React.Component {
 
 
     getReceivedFriendRequests() {
-        axios.get('http://192.168.1.41:81/friend-request/recived/'+sessionStorage.getItem("id"))
+        axios.get('http://192.168.1.35:81/friend-request/recived/'+sessionStorage.getItem("id"))
         .then(response => {
             this.setState({
                 friendRequests: response.data.receivedFriendRequest
@@ -90,7 +93,7 @@ class UserInterface extends React.Component {
 
 
     handleFriendRequest(friendRequest, value) {
-        axios.post('http://192.168.1.41:81/friend-request/'+friendRequest+'/edit', {
+        axios.post('http://192.168.1.35:81/friend-request/'+friendRequest+'/edit', {
             "value": value
         })
         .then(response => {
@@ -106,7 +109,7 @@ class UserInterface extends React.Component {
 
 
     handleWebSocket() {
-        var conn = new WebSocket('ws://192.168.1.41:8282/game');
+        var conn = new WebSocket('ws://192.168.1.35:8282/game');
 
         conn.onopen = e => { 
             console.log("Conexión establecida");
@@ -145,15 +148,79 @@ class UserInterface extends React.Component {
         };
     }
 
+    setTargetUser = (targetUser) => {
+        this.setState({targetUser: targetUser});
+    }
+
+    setChosenShip = (ship) => {
+        this.setState({chosenShip: ship});
+    }
+
+    sectionDisplay = () => {
+        if (this.state.targetUser != null) return <ChooseShip ships={this.state.ships} setChosenShip={this.setChosenShip} />;
+    }
+
+    setAsideOption() {
+        let component = "";
+
+        switch (this.state.asideOption) {
+            case "Naves":
+                component = <ChooseShip ships={this.state.ships} setChosenShip={this.setChosenShip} />;
+                break;
+
+            case "Naves":
+                component = "";
+                break;
+
+            case "Amigos":
+                component = <Friends friends={this.state.friends} setTargetUser={this.setTargetUser} />;
+                break;
+        
+            default:
+                component = "";
+                break;
+        }
+
+        return component;
+    }
+
+
 
     render () {
         return (
             <div className="user-interface">
-                <header className="header bg-info">
+                <header className="header">
                     <div className='container-fluid d-flex justify-content-between align-items-center p-3 px-5'>
-                        <p>Aqui el logo</p>
+                        <nav className="navbar navbar-expand-lg">
+                            <div className="container-fluid">
+                                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span className="navbar-toggler-icon"></span>
+                                </button>
+
+                                <div className="collapse navbar-collapse" id="navbarNav">
+                                    <ul className="navbar-nav">
+                                        <li className="nav-item">
+                                            <div className="nav-link" href="#">Home</div>
+                                        </li>
+                                        <li className="nav-item" onClick={() => {this.setState({asideOption: <ChooseShip ships={this.state.ships} setChosenShip={this.setChosenShip} />})}}>
+                                            <div className="nav-link" href="#">Naves</div>
+                                        </li>
+                                        <li className="nav-item" onClick={() => {this.setState({asideOption: "Historial"})}}>
+                                            <div className="nav-link" href="#">Historial</div>
+                                        </li>
+                                        <li className="nav-item" onClick={() => {this.setState({asideOption: <Friends friends={this.state.friends} setTargetUser={this.setTargetUser} />})}}>
+                                            <div className="nav-link" href="#">Amigos</div>
+                                        </li>
+                                        <li className="nav-item">
+                                            <div className="nav-link" href="#">Cerrar sesión</div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </nav>
+
                         <div className='d-flex align-items-center'>
-                            <p>Aqui user</p>
+                            <p className='mb-0'>{sessionStorage.getItem("username")}</p>
                             <div className='notification' onClick={() => this.setState({showNotifications: !this.state.showNotifications})}>
                                 <BellFill size={20} color="#FFD700"/>
                                 <div className='notification__number'>{this.state.friendRequests.length}</div>
@@ -163,32 +230,102 @@ class UserInterface extends React.Component {
                     </div>
                 </header>
 
-                <div className='container-fluid'>
-                    <div className='row'>
-                        <div className='aside col-3'>
-                            <FriendForm></FriendForm>
-                            
-                            <Friends friends={this.state.friends}></Friends>
+                <div className='container-fluid mt-4' style={{height: "85%"}}>
+                    <div className='row' style={{height: "100%"}}>
+                        <div className='aside col-12 col-lg-3'>
+                            {this.state.asideOption}
+                            {/* <ChooseShip ships={this.state.ships} setChosenShip={this.setChosenShip} ></ChooseShip> */}
+
+                            {/* <FriendForm></FriendForm>
+                            <Friends friends={this.state.friends} setTargetUser={this.setTargetUser}></Friends> */}
+
+                            <form action={'http://192.168.1.35:81/game'} method='post' target='_blank'>
+                                <input type="hidden" value={this.state.targetUser} name='target-user'></input>
+                                <input type="hidden" value={this.state.chosenShip} name='chosenShip'></input>
+                                <input type="submit" ></input>
+                            </form>
                         </div>
 
                         <section className='section col-12 col-lg-9'>
-                            <div className='players-container row'>
-                                {this.state.players.map(player => (
-                                    <div className='col-12 col-md-6 col-lg-4 d-flex justify-content-center align-items-center' key={player.id}>
-                                        <div className='player-card' data-value={player.id}>
-                                            <img src={"http://192.168.1.41:81/media/images/"+player.img} className='img-fluid'></img>
-                                            <p>{player.name}</p>
+                            <div className='row w-100 m-0'>
+                                <div className='main-ship__box col-12 col-lg-9 d-flex align-items-center justify-content-center'>
+                                    <img src={"http://192.168.1.35:81/media/images/millenary falcon/millenary falcon.gif"} className='main-ship__img'></img>
+                                </div>
+                                <div className='main-ship__statistics col-12 col-lg-3'>
+                                    <p>Estadísticas</p>
+                                    <div className='container-fluid'>
+                                        <div className='row'>
+                                            <div className='col-12 col-md-6'>
+                                                <p>Vida</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>100</p>
+                                            </div>
+
+                                            <div className='col-12 col-md-6'>
+                                                <p>Aceleración</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>0.2</p>
+                                            </div>
+
+                                            <div className='col-12 col-md-6'>
+                                                <p>Velocidad máxima</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>10</p>
+                                            </div>
+
+                                            <div className='col-12 col-md-6'>
+                                                <p>Velocidad de giro</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>5</p>
+                                            </div>
+
+                                            <div className='col-12 col-md-6'>
+                                                <p>Defensa</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>60</p>
+                                            </div>
                                         </div>
                                     </div>
-                                ))}
+
+                                    <p>Ataque</p>
+                                    <div className='container-fluid'>
+                                        <div className='row'>
+                                            <div className='col-12 col-md-6'>
+                                                <p>Ataque normal</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>2</p>
+                                            </div>
+
+                                            <div className='col-12 col-md-6'>
+                                                <p>Ataque especial</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>10</p>
+                                            </div>
+
+                                            <div className='col-12 col-md-6'>
+                                                <p>Carga ataque especial</p>
+                                            </div>
+                                            <div className='col-12 col-md-6'>
+                                                <p>30</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {/* {(this.state.targetUser != "") ? <ChooseShip ships={this.state.ships} setChosenShip={this.setChosenShip}></ChooseShip> : ""} */}
+                            <div className='main-ship__name mt-4'>
+                                <div>Millenary Falcon</div>
                             </div>
                         </section>
                     </div>
                 </div>
-
-                <footer className='footer bg-info'>
-                    <p>Footer</p>
-                </footer>
             </div>
         )
     };

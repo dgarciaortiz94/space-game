@@ -1,5 +1,7 @@
 import axios from 'axios';
 import React from 'react';
+import FriendForm from './friends/friendForm';
+import FriendsList from './friends/friendsList';
 
 class Friends extends React.Component {
 
@@ -14,15 +16,9 @@ class Friends extends React.Component {
 
     render () {
         return (
-            <div className='friends-container'>
-                {this.props.friends.map(friend => (
-                    <a href={'http://192.168.1.41:81/game/'+sessionStorage.getItem("id")+'/'+friend.id} key={friend.id} target="__blank">
-                        <div className='friend d-flex justify-content-between align-items-center'>
-                            <p>{friend.username}</p>
-                            <div className={friend.state}></div>
-                        </div>
-                    </a>
-                ))}
+            <div>
+                <FriendForm></FriendForm>
+                <FriendsList friends={this.state.friends} setTargetUser={this.props.setTargetUser}></FriendsList>
             </div>
         )
     };

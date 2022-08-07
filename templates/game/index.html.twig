@@ -44,6 +44,22 @@
         window.onload = () => 
         {
             let targetUserId = "{{ targetUser.id }}";
+            let chosenShip = {
+                id: "{{ chosenShip.id }}",
+                name: "{{ chosenShip.name }}",
+                img: "{{ chosenShip.img }}",
+                acelerationCoefficient: parseFloat("{{ chosenShip.acelerationCoefficient }}"),
+                turnCoeficient: parseFloat("{{ chosenShip.turnCoeficient }}"),
+                live: parseFloat("{{ chosenShip.live }}"),
+                maxSpeed: parseFloat("{{ chosenShip.maxSpeed }}"),
+                projectile: {
+                    id: "{{ chosenShip.projectile.id }}",
+                    name: "{{ chosenShip.projectile.name }}",
+                    speed: parseFloat("{{ chosenShip.projectile.speed }}"),
+                    damage: parseFloat("{{ chosenShip.projectile.damage }}"),
+                }
+            }
+
             let play = false;
 
             canvas = document.getElementById("canvas");
@@ -77,7 +93,7 @@
                     this.frameNo = 0;
                     this.interval = setInterval(updateGameArea, 20);
 
-                    conn = new WebSocket('ws://192.168.1.41:8282/game');
+                    conn = new WebSocket('ws://192.168.1.35:8282/game');
 
 
                     // SOCKETS
@@ -168,15 +184,16 @@
 
             class Ship
             {
-                constructor(imagePath, width, height, x, y, live, acelerationCoefficient, turnCoeficient) 
+                constructor(imagePath, width, height, x, y, live, acelerationCoefficient, turnCoeficient, maxSpeed, projectile) 
                 {
                     this.img = new Image();
                     this.img.src = imagePath;
 
                     this.width = width;
                     this.height = height;
-                    this.live = 100;
+                    this.live = live;
                     this.speed = 0;
+                    this.maxSpeed = maxSpeed;
                     this.aceleration = 0;
                     this.acelerationCoefficient = acelerationCoefficient;
                     this.angle = 0;
@@ -184,6 +201,8 @@
                     this.turnCoeficient = turnCoeficient;
                     this.x = x;
                     this.y = y;
+
+                    this.projectile = projectile;
 
                     this.killed = false;
 
@@ -193,6 +212,10 @@
 
                 // RENDER SHIP
                 update(ctx, player2) {
+                    if (player1.speed < 0.25 * 10) player1.img.src = "../../media/images/millenary falcon/millenary falcon-stopped.png";
+                    else if (player1.speed < 0.75 * 10) player1.img.src = "../../media/images/millenary falcon/millenary falcon.png";
+                    else player1.img.src = "../../media/images/millenary falcon/millenary falcon-flying2.png";
+
                     this.newPos();
 
                     this.ctx = ctx;
@@ -214,7 +237,7 @@
 
                 // ATACK
                 shoot() {
-                    this.projectiles.push(new Projectile(this.x, this.y, this.angle));
+                    this.projectiles.push(new Projectile(this.x, this.y, this.angle, this.projectile.speed, this.projectile.damage));
                 }
 
 
@@ -227,7 +250,8 @@
                             this.projectiles.splice(this.projectiles.indexOf(projectile), 1);
 
                             if (projectile.hasHit()) {
-                                player2.live -= 2;
+                                player2.live -= projectile.damage;
+
                                 document.getElementById("player2__bar").style.width = player2.live+"%";
                                 document.getElementById("player2__bar").setAttribute("aria-valuenow", player2.live);
                             }
@@ -238,9 +262,10 @@
 
             
             class Projectile {
-                constructor(x, y, angle)
+                constructor(x, y, angle, speed, damage)
                 {
-                    this.speed = 30;
+                    this.speed = speed;
+                    this.damage = damage;
                     this.x = x;
                     this.y = y;
                     this.width = 2;
@@ -319,7 +344,7 @@
             let gameArea;
 
             function startGame() {
-                player1 = new Ship("../../media/images/ship1/ship1.png", 60, 60, 225, 225, 100, 0.15, 3);
+                player1 = new Ship("../../media/images/"+chosenShip.img, 60, 60, 225, 225, chosenShip.live, chosenShip.acelerationCoefficient, chosenShip.turnCoeficient, chosenShip.maxSpeed, chosenShip.projectile);
                 player2 = new Ship("../../media/images/ship2/ship2.png", 60, 60, 425, 425, 100, 0.15, 3);
 
                 gameArea = new Canvas(canvas, windowWidth, windowHeight);
@@ -341,15 +366,18 @@
                 if (gameArea.keys && gameArea.keys["ArrowUp"]) {
                     if ( !(player1.x <= 0 + player1.width/2) && !(player1.x >= gameArea.width - player1.width/2) 
                         && !(player1.y <= 0 + player1.width/2) && !(player1.y >= gameArea.height - player1.width/2) ) { 
-                            if (player1.aceleration <= 10) {
+                            if (player1.aceleration <= player1.maxSpeed) {
                                 player1.aceleration += player1.acelerationCoefficient;
                                 player1.speed = Math.round(player1.aceleration);
                             }
-                            else player1.speed = 10;
+                            else player1.speed = player1.maxSpeed;
                     }
                     else { 
                         player1.aceleration = 0;
                         player1.speed = 1;
+                        player1.live -= 0.1;
+                        document.getElementById("player1__bar").style.width = player1.live+"%";
+                        document.getElementById("player1__bar").setAttribute("aria-valuenow", player1.live);
                     }
                 } else {
                     if (player1.aceleration > 0) {
@@ -357,19 +385,22 @@
                         player1.speed = Math.round(player1.aceleration);
                     }
                 }
-
+                
                 if (gameArea.keys && gameArea.keys["ArrowDown"]) {
                     if ( !(player1.x <= 0 + player1.width/2) && !(player1.x >= gameArea.width - player1.width/2) 
                         && !(player1.y <= 0 + player1.width/2) && !(player1.y >= gameArea.height - player1.width/2) ) { 
-                            if (player1.aceleration >= -10) {
+                            if (player1.aceleration >= -player1.maxSpeed) {
                                 player1.aceleration -= player1.acelerationCoefficient;
                                 player1.speed = Math.round(player1.aceleration);
                             }
-                            else player1.speed = -10;
+                            else player1.speed = -player1.maxSpeed;
                     }
                     else { 
                         player1.aceleration = 0;
                         player1.speed = -1;
+                        player1.live -= 0.2;
+                        document.getElementById("player1__bar").style.width = player1.live+"%";
+                        document.getElementById("player1__bar").setAttribute("aria-valuenow", player1.live);
                     }
                 } else {
                     if (player1.aceleration < 0) {

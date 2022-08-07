@@ -25,6 +25,15 @@ class Player
     #[ORM\Column(type: 'float')]
     private $turnCoeficient;
 
+    #[ORM\Column(type: 'float')]
+    private $maxSpeed;
+
+    #[ORM\ManyToOne(targetEntity: Projectile::class, inversedBy: 'players')]
+    private $projectile;
+
+    #[ORM\Column(type: 'float')]
+    private $live;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -74,6 +83,42 @@ class Player
     public function setTurnCoeficient(float $turnCoeficient): self
     {
         $this->turnCoeficient = $turnCoeficient;
+
+        return $this;
+    }
+
+    public function getMaxSpeed(): ?float
+    {
+        return $this->maxSpeed;
+    }
+
+    public function setMaxSpeed(float $maxSpeed): self
+    {
+        $this->maxSpeed = $maxSpeed;
+
+        return $this;
+    }
+
+    public function getProjectile(): ?Projectile
+    {
+        return $this->projectile;
+    }
+
+    public function setProjectile(?Projectile $projectile): self
+    {
+        $this->projectile = $projectile;
+
+        return $this;
+    }
+
+    public function getLive(): ?float
+    {
+        return $this->live;
+    }
+
+    public function setLive(float $live): self
+    {
+        $this->live = $live;
 
         return $this;
     }
